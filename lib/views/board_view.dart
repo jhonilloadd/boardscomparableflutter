@@ -1,52 +1,58 @@
-import 'package:flutter/material.dart';
-import 'api_service.dart';
+import 'dart:ffi';
 
-class BoardManagementScreen extends StatefulWidget {
-  BoardManagementScreen(this.apiService);
+import 'package:boardscomparableflutter/model/board.dart';
+import 'package:flutter/material.dart';
+import '../services/api_service.dart';
+
+class BoardView extends StatefulWidget {
+  BoardView(this.apiService);
 
   ApiService apiService;
   @override
-  _BoardManagementScreenState createState() => _BoardManagementScreenState();
+  _BoardViewState createState() => _BoardViewState();
 }
 
-class _BoardManagementScreenState extends State<BoardManagementScreen> {
+class _BoardViewState extends State<BoardView> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _modelController = TextEditingController();
   final TextEditingController _brandController = TextEditingController();
-  String? _boardId;
+  Int? _boardId;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Board Management')),
+      appBar: AppBar(title: const Text('Board Management')),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.max,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _nameController,
-              decoration: InputDecoration(labelText: 'Name'),
+              decoration: const InputDecoration(labelText: 'Name'),
             ),
             TextField(
               controller: _modelController,
-              decoration: InputDecoration(labelText: 'Model'),
+              decoration: const InputDecoration(labelText: 'Model'),
             ),
             TextField(
               controller: _brandController,
-              decoration: InputDecoration(labelText: 'Brand'),
+              decoration: const InputDecoration(labelText: 'Brand'),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             ElevatedButton(
               onPressed: _registerBoard,
-              child: Text('Register Board'),
+              child: const Text('Register Board'),
             ),
             ElevatedButton(
               onPressed: _updateBoard,
-              child: Text('Update Board'),
+              child: const Text('Update Board'),
             ),
             ElevatedButton(
               onPressed: _deleteBoard,
-              child: Text('Delete Board'),
+              child: const Text('Delete Board'),
             ),
           ],
         ),
@@ -58,21 +64,21 @@ class _BoardManagementScreenState extends State<BoardManagementScreen> {
     if (_nameController.text.isEmpty ||
         _modelController.text.isEmpty ||
         _brandController.text.isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(SnackBar(content: Text('Please fill in all fields')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please fill in all fields')));
       return;
     }
     try {
-      final response = await widget.apiService.registerBoard({
-        'name': _nameController.text,
-        'model': _modelController.text,
-        'brand': _brandController.text,
-      });
+      var board = Board(
+          name: _nameController.text,
+          model: _modelController.text,
+          brand: _brandController.text);
+      final response = await widget.apiService.registerBoard(board);
       setState(() {
-        _boardId = response.data['id'];
+        _boardId = response.id!;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Board registered successfully')));
+          const SnackBar(content: Text('Board registered successfully')));
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to register board: ${e.toString()}')));
@@ -82,7 +88,7 @@ class _BoardManagementScreenState extends State<BoardManagementScreen> {
   void _updateBoard() async {
     if (_boardId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Please register a board first')));
+          const SnackBar(content: Text('Please register a board first')));
       return;
     }
     if (_nameController.text.isEmpty ||
@@ -93,11 +99,11 @@ class _BoardManagementScreenState extends State<BoardManagementScreen> {
       return;
     }
     try {
-      await widget.apiService.updateBoard(_boardId!, {
-        'name': _nameController.text,
-        'model': _modelController.text,
-        'brand': _brandController.text,
-      });
+      var board = Board(
+          name: _nameController.text,
+          model: _modelController.text,
+          brand: _brandController.text);
+      await widget.apiService.updateBoard(_boardId!, board);
       ScaffoldMessenger.of(context)
           .showSnackBar(SnackBar(content: Text('Board updated successfully')));
     } catch (e) {
